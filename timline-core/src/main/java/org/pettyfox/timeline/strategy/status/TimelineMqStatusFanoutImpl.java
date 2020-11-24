@@ -13,19 +13,19 @@ import java.util.List;
  * @version 1.0
  */
 public class TimelineMqStatusFanoutImpl<T extends TimelineMessageStatusFanout> implements TimelineMq<T> {
-    private TimelineStore store;
+    private TimelineStore<T> store;
     private TimelineExchange exchange;
-    public TimelineMqStatusFanoutImpl(TimelineStore store, TimelineExchange exchange){
+    public TimelineMqStatusFanoutImpl(TimelineStore<T> store, TimelineExchange exchange){
         this.store = store;
         this.exchange = exchange;
     }
     @Override
-    public void push(Timeline<? extends T> timeline) {
+    public void push(Timeline<T> timeline) {
         this.store.store(timeline);
     }
 
     @Override
-    public List<Timeline<? extends T>> pull(TimelinePullParameter parameter) {
-        return null;
+    public List<Timeline<T>> pull(TimelinePullParameter parameter) {
+        return this.store.listTimeline(exchange.listByBeSubscribe(parameter.getConsumerId()),parameter);
     }
 }

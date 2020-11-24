@@ -13,6 +13,6 @@ import java.util.List;
  * @version 1.0
  */
 public interface TimelineMq<T extends TimelineMessage> {
-    void push(Timeline<? extends T> timeline);
-    List<Timeline<? extends T>>  pull(TimelinePullParameter parameter);
+    void push(Timeline<T> timeline);
+    List<Timeline<T>> pull(TimelinePullParameter parameter);
 }
