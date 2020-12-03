@@ -1,8 +1,6 @@
 package org.pettyfox.timeline.strategy.status;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.pettyfox.timeline.model.TimelineMessage;
 
 /**
@@ -12,6 +10,8 @@ import org.pettyfox.timeline.model.TimelineMessage;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TimelineMessageStatusFanout extends TimelineMessage {
     private Boolean enable;
     private String uniqueId;

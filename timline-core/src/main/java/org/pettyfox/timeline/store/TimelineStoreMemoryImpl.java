@@ -25,8 +25,14 @@ public class TimelineStoreMemoryImpl<T extends TimelineMessage> implements Timel
 
     @Override
     public List<Timeline<T>> listTimeline(List<String> producerIds, TimelinePullParameter parameter) {
+        if(null == producerIds){
+            return null;
+        }
         List<Timeline<T>> timelines = new ArrayList<>();
         producerIds.forEach(producerId->{
+            if(null == map.get(producerId)){
+                return;
+            }
             timelines.addAll( map.get(producerId).stream()
                     .filter(timeline -> timeline.getSequenceId() >= parameter.getFrom() && timeline.getSequenceId() <= parameter.getTo())
                     .collect(Collectors.toList()));
