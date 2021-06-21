@@ -1,9 +1,11 @@
 package org.pettyfox.timeline2.core;
 
+import lombok.extern.slf4j.Slf4j;
 import org.pettyfox.timeline2.model.TimelineMessage;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -13,8 +15,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * @version 1.0
  * @date 2021/6/18 10:22
  */
+@Slf4j
 public class TimelineMqConsumerPool {
     private static final int HASH_BITS = 0x7fffffff;
+    private static final String THREAD_NAME_PREFIX = "timeline-mq-cpool-";
     private int currentCount = 2;
     private final TimelineCursorMq timelineCursorMq;
     private WorkThread[] pool;
@@ -28,7 +32,7 @@ public class TimelineMqConsumerPool {
         pool = new WorkThread[currentCount];
         for (int i = 0; i < pool.length; i++) {
             pool[i] = new WorkThread();
-            pool[i].setName("timeline-mq-cpool-" + i);
+            pool[i].setName(THREAD_NAME_PREFIX + i);
             pool[i].start();
         }
     }
@@ -51,7 +55,9 @@ public class TimelineMqConsumerPool {
     private final class WorkThread extends Thread {
         private final CopyOnWriteArraySet<ConsumerSession> consumerList = new CopyOnWriteArraySet<>();
         private final AtomicBoolean allSleep = new AtomicBoolean(true);
-        private final Condition condition = new ReentrantLock().newCondition();
+        private final ReentrantLock lock = new ReentrantLock();
+        private final Condition condition = lock.newCondition();
+        private volatile boolean work = true;
 
         public void addConsumer(ConsumerSession consumerSession) {
             consumerList.remove(consumerSession);
@@ -69,18 +75,24 @@ public class TimelineMqConsumerPool {
         }
 
         public void wakeupThread() {
-            synchronized (condition) {
-                condition.notify();
+            lock.lock();
+            try {
+                condition.signal();
+            } finally {
+                lock.unlock();
             }
         }
 
         @Override
         public void run() {
-            for (; ; ) {
+            while (work) {
                 try {
                     if (allSleep.get()) {
-                        synchronized (condition) {
-                            condition.wait();
+                        lock.lock();
+                        try {
+                            condition.await();
+                        } finally {
+                            lock.unlock();
                         }
                     }
                     consumerList.forEach(consumer -> {
@@ -100,7 +112,11 @@ public class TimelineMqConsumerPool {
                 consumer.setSleep(true);
                 List<TimelineMessage> queue = timelineCursorMq.pull(consumer.getConsumerId(), consumer.getBatchSize());
                 if (null != queue && !queue.isEmpty()) {
-                    consumer.getListener().batchConsumer(queue);
+                    if (null != consumer.getListener()) {
+                        consumer.getListener().batchConsumer(queue);
+                    } else {
+                        log.warn("not config consumer listener.");
+                    }
                 }
             }
         }

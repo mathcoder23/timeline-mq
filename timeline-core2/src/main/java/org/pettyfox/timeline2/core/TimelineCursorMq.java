@@ -47,4 +47,6 @@ public interface TimelineCursorMq {
      * @param consumerId 消费者id
      */
     void unregisterConsumer(String consumerId);
+
+    void setTimeoutListener(TimelineMqConsumerTimeout timeoutListener);
 }
