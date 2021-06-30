@@ -4,8 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.pettyfox.timeline2.model.TimelineMessage;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,24 +51,26 @@ public class TimelineMqConsumerPool {
         return (h ^ (h >>> 16)) & HASH_BITS;
     }
 
+    public void wakeupTread(String consumerId) {
+        int hash = spread(consumerId.hashCode());
+        pool[hash % pool.length].wakeupThreadByConsumerId(consumerId);
+    }
+
     private final class WorkThread extends Thread {
-        private final CopyOnWriteArraySet<ConsumerSession> consumerList = new CopyOnWriteArraySet<>();
+        private final ConcurrentHashMap<String, ConsumerSession> consumerMap = new ConcurrentHashMap<>();
         private final AtomicBoolean allSleep = new AtomicBoolean(true);
         private final ReentrantLock lock = new ReentrantLock();
         private final Condition condition = lock.newCondition();
         private volatile boolean work = true;
 
         public void addConsumer(ConsumerSession consumerSession) {
-            consumerList.remove(consumerSession);
-            consumerList.add(consumerSession);
+            consumerMap.put(consumerSession.getConsumerId(), consumerSession);
             wakeupThread();
         }
 
         public void removeConsumer(String consumerId) {
-            ConsumerSession consumerSession = new ConsumerSession();
-            consumerSession.setConsumerId(consumerId);
-            consumerList.remove(consumerSession);
-            if (consumerList.isEmpty()) {
+            consumerMap.remove(consumerId);
+            if (consumerMap.isEmpty()) {
                 allSleep.set(true);
             }
         }
@@ -81,6 +82,14 @@ public class TimelineMqConsumerPool {
             } finally {
                 lock.unlock();
             }
+        }
+
+        public void wakeupThreadByConsumerId(String consumerId) {
+            if (!consumerMap.containsKey(consumerId)) {
+                return;
+            }
+            consumerMap.get(consumerId).setSleep(false);
+            wakeupThread();
         }
 
         @Override
@@ -95,7 +104,7 @@ public class TimelineMqConsumerPool {
                             lock.unlock();
                         }
                     }
-                    consumerList.forEach(consumer -> {
+                    consumerMap.forEach((k, consumer) -> {
                         if (!consumer.isSleep()) {
                             allSleep.set(false);
                             dispatchConsumer(consumer);

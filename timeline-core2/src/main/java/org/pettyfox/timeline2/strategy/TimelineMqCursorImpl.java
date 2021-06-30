@@ -1,9 +1,8 @@
 package org.pettyfox.timeline2.strategy;
 
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalCause;
+import com.google.common.cache.*;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.pettyfox.timeline2.core.*;
 import org.pettyfox.timeline2.model.TimelineHead;
@@ -15,6 +14,8 @@ import org.pettyfox.timeline2.store.TimelineMqStore;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * @version 1.0
  */
 @Slf4j
-public class TimelineMqCursorImpl implements TimelineCursorMq {
+public class TimelineMqCursorImpl implements TimelineCursorMq, RemovalListener<String, TimelineHead> {
     private final TimelineMqStore timelineStore;
     private final TimelineExchange timelineExchange;
     private final TimelineConsumerCursorStore timelineConsumerCursorStore;
@@ -36,8 +37,30 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
         this.timelineStore = timelineStore;
         this.timelineExchange = timelineExchange;
         this.timelineConsumerCursorStore = timelineConsumerCursorStore;
+        ScheduledExecutorService timeoutTask = new ScheduledThreadPoolExecutor(1,
+                new ThreadFactoryBuilder().setNameFormat("timeline-timeout-").build(), (r, executor) -> {
+            log.warn("timeline-timeout exception");
+        });
+        timeoutTask.scheduleAtFixedRate(() -> {
+            consumerPendingCache.forEach((k, c) -> {
+                try {
+                    c.cleanUp();
+                } catch (Exception e) {
+                    log.error("timeout handler exception:{}", e.getMessage());
+                }
+            });
+        }, 0, 1, TimeUnit.SECONDS);
     }
 
+    @Override
+    public void onRemoval(RemovalNotification<String, TimelineHead> notification) {
+        //超时同步队列
+        if (notification.getCause().equals(RemovalCause.EXPIRED)) {
+            timelineMqConsumerTimeout.timeout(notification.getKey(), notification.getValue());
+        } else if (!notification.getCause().equals(RemovalCause.EXPLICIT)) {
+            log.debug("sync ack syncId:{},remove type:{}", notification.getKey(), notification.getCause());
+        }
+    }
 
     @Override
     public void push(TimelineMessage timelineMessage) {
@@ -47,6 +70,7 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
     @Override
     public void consumerAck(String consumerId, TimelineHead timelineHead) {
         timelineConsumerCursorStore.storeConsumerAck(consumerId, timelineHead);
+        consumerPool.wakeupTread(consumerId);
     }
 
     @Override
@@ -98,14 +122,7 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
                 /**
                  * 同步列队超时或异常监听
                  */
-                .removalListener(removalNotification -> {
-                    //超时同步队列
-                    if (removalNotification.getCause().equals(RemovalCause.EXPIRED)) {
-                        timelineMqConsumerTimeout.timeout(consumerId,(TimelineHead) removalNotification.getValue());
-                    } else if (!removalNotification.getCause().equals(RemovalCause.EXPLICIT)) {
-                        log.debug("sync ack syncId:{},remove type:{}", removalNotification.getKey(), removalNotification.getCause());
-                    }
-                }).build());
+                .removalListener(this).build());
         list.forEach(k -> cache.put(String.valueOf(k.getId()), k));
     }
 }
