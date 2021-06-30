@@ -10,8 +10,8 @@ import org.pettyfox.timeline2.store.impl.TimelineConsumerCursorStoreMemoryImpl;
 import org.pettyfox.timeline2.store.impl.TimelineExchangeMemoryImpl;
 import org.pettyfox.timeline2.store.impl.TimelineMqStoreMemoryImpl;
 
-import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Petty Fox
@@ -37,12 +37,14 @@ public class SimpleTest {
             message.setTopic("123");
             timelineMq.push(message);
         }
-
+        AtomicInteger i = new AtomicInteger();
         // 注册消费监听
         timelineMq.registerConsumer("c1", 5, queue -> {
             for (TimelineMessage message : queue) {
                 log.info("consumer message :{}", message.getId());
-//                timelineMq.consumerAck("c1", message);
+                if(i.incrementAndGet() <2000){
+                    timelineMq.consumerAck("c1", message);
+                }
             }
         });
         timelineMq.registerConsumer("c2", 5, queue -> {
@@ -54,7 +56,14 @@ public class SimpleTest {
         timelineMq.setTimeoutListener((consumerId, timelineHead) -> {
             log.info("time out {},{}", consumerId, timelineHead.getId());
         });
+        Thread.sleep(20000);
+        for (int l = 200; l < 300; l++) {
+            TimelineMessage message = new TimelineMessage();
+            message.setId((long) l);
+            message.setBody("测试:" + l);
+            message.setTopic("123");
+            timelineMq.push(message);
+        }
         new CountDownLatch(1).await();
-        TreeSet<String> a = new TreeSet<>();
     }
 }

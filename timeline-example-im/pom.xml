@@ -2,80 +2,57 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>timeline-mq</artifactId>
+        <groupId>org.pettyfox.timeline</groupId>
+        <version>1.0.0-Alpha</version>
+    </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.pettyfox.timeline</groupId>
-    <artifactId>timeline-mq</artifactId>
-    <packaging>pom</packaging>
-    <version>1.0.0-Alpha</version>
-    <modules>
-        <module>timline-core</module>
-        <module>timeline-core2</module>
-        <module>timeline-store</module>
-        <module>timline-model</module>
-        <module>timeline-store-impl/timeline-store-memory</module>
-        <module>timeline-example</module>
-        <module>timeline-example-im</module>
-    </modules>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>8</source>
-                    <target>8</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <artifactId>timeline-example-im</artifactId>
     <dependencies>
         <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.7.3</version>
+        </dependency>
+        <dependency>
             <groupId>org.pettyfox.timeline</groupId>
-            <artifactId>timline-model</artifactId>
+            <artifactId>timeline-core2</artifactId>
             <version>1.0.0-Alpha</version>
             <scope>compile</scope>
         </dependency>
-
-
+        <dependency>
+            <groupId>org.pettyfox.timeline</groupId>
+            <artifactId>timeline-store-memory</artifactId>
+            <version>1.0.0-Alpha</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.25</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <version>1.1.11</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.1.11</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
             <version>1.7.25</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.12</version>
-            <scope>provided</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/junit/junit -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-
-
     </dependencies>
+
 </project>

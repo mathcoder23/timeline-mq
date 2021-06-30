@@ -27,6 +27,14 @@ public class TimelineExchangeMemoryImpl implements TimelineExchange {
     }
 
     @Override
+    public void subscribe(String consumerId, Set<String> producerIds) {
+        for (String producerId : producerIds) {
+            producerCache.computeIfAbsent(producerId, (key) -> new HashSet<>()).add(consumerId);
+            consumerCache.computeIfAbsent(consumerId, (key) -> new HashSet<>()).add(producerId);
+        }
+    }
+
+    @Override
     public void unsubscribe(String consumerId, String producerId) {
         producerCache.computeIfAbsent(producerId, (key) -> new HashSet<>()).remove(consumerId);
         consumerCache.computeIfAbsent(consumerId, (key) -> new HashSet<>()).remove(producerId);

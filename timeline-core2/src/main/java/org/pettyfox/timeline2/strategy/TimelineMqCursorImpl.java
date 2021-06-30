@@ -2,6 +2,7 @@ package org.pettyfox.timeline2.strategy;
 
 
 import com.google.common.cache.*;
+import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.pettyfox.timeline2.core.*;
@@ -13,6 +14,7 @@ import org.pettyfox.timeline2.store.TimelineExchange;
 import org.pettyfox.timeline2.store.TimelineMqStore;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -25,12 +27,13 @@ import java.util.concurrent.TimeUnit;
  * @version 1.0
  */
 @Slf4j
-public class TimelineMqCursorImpl implements TimelineCursorMq, RemovalListener<String, TimelineHead> {
+public class TimelineMqCursorImpl implements TimelineCursorMq {
     private final TimelineMqStore timelineStore;
     private final TimelineExchange timelineExchange;
     private final TimelineConsumerCursorStore timelineConsumerCursorStore;
     private final TimelineMqConsumerPool consumerPool = new TimelineMqConsumerPool(this);
     private final ConcurrentHashMap<String, Cache<String, TimelineHead>> consumerPendingCache = new ConcurrentHashMap<>();
+    private final AtomicLongMap<String> consumerPendingCounter = AtomicLongMap.create();
     private TimelineMqConsumerTimeout timelineMqConsumerTimeout;
 
     public TimelineMqCursorImpl(TimelineMqStore timelineStore, TimelineExchange timelineExchange, TimelineConsumerCursorStore timelineConsumerCursorStore) {
@@ -52,25 +55,41 @@ public class TimelineMqCursorImpl implements TimelineCursorMq, RemovalListener<S
         }, 0, 1, TimeUnit.SECONDS);
     }
 
-    @Override
-    public void onRemoval(RemovalNotification<String, TimelineHead> notification) {
-        //超时同步队列
-        if (notification.getCause().equals(RemovalCause.EXPIRED)) {
-            timelineMqConsumerTimeout.timeout(notification.getKey(), notification.getValue());
-        } else if (!notification.getCause().equals(RemovalCause.EXPLICIT)) {
-            log.debug("sync ack syncId:{},remove type:{}", notification.getKey(), notification.getCause());
-        }
-    }
 
     @Override
     public void push(TimelineMessage timelineMessage) {
         timelineStore.store(timelineMessage);
+        List<String> consumerList = timelineExchange.listBySubscribe(timelineMessage.getTopic());
+        if (null != consumerList && !consumerList.isEmpty()) {
+            consumerList.forEach(consumerId -> {
+                if (!hasPending(consumerId)) {
+                    consumerPool.wakeupTread(consumerId);
+                }
+            });
+
+        }
     }
 
     @Override
     public void consumerAck(String consumerId, TimelineHead timelineHead) {
-        timelineConsumerCursorStore.storeConsumerAck(consumerId, timelineHead);
-        consumerPool.wakeupTread(consumerId);
+        Optional.ofNullable(consumerPendingCache.get(consumerId)).ifPresent(cache -> {
+            cache.invalidate(String.valueOf(timelineHead.getId()));
+            consumerPendingCounter.decrementAndGet(consumerId);
+            timelineConsumerCursorStore.storeConsumerAck(consumerId, timelineHead);
+            if (!hasPending(consumerId)) {
+                consumerPool.wakeupTread(consumerId);
+            }
+        });
+    }
+
+    private void timeoutAck(String consumerId, TimelineHead timelineHead) {
+        Optional.ofNullable(consumerPendingCache.get(consumerId)).ifPresent(cache -> {
+            consumerPendingCounter.decrementAndGet(consumerId);
+            timelineConsumerCursorStore.storeConsumerAck(consumerId, timelineHead);
+            if (!hasPending(consumerId)) {
+                consumerPool.wakeupTread(consumerId);
+            }
+        });
     }
 
     @Override
@@ -109,7 +128,7 @@ public class TimelineMqCursorImpl implements TimelineCursorMq, RemovalListener<S
     }
 
     private boolean hasPending(String consumerId) {
-        return consumerPendingCache.containsKey(consumerId) && consumerPendingCache.get(consumerId).size() != 0;
+        return consumerPendingCounter.get(consumerId) > 0;
     }
 
     private void addPending(String consumerId, List<TimelineMessage> list) {
@@ -122,7 +141,30 @@ public class TimelineMqCursorImpl implements TimelineCursorMq, RemovalListener<S
                 /**
                  * 同步列队超时或异常监听
                  */
-                .removalListener(this).build());
+                .removalListener(new CacheRemoveListener(consumerId)).build());
         list.forEach(k -> cache.put(String.valueOf(k.getId()), k));
+        consumerPendingCounter.addAndGet(consumerId, list.size());
+    }
+
+    /**
+     * 基于Guava-Cache的移除监听逻辑实现，这依赖于心跳线程对Cache中过期的条目进出检测
+     */
+    private class CacheRemoveListener implements RemovalListener<String, TimelineHead> {
+        private String consumerId;
+
+        public CacheRemoveListener(String consumerId) {
+            this.consumerId = consumerId;
+        }
+
+        @Override
+        public void onRemoval(RemovalNotification<String, TimelineHead> notification) {
+            //超时同步队列
+            if (notification.getCause().equals(RemovalCause.EXPIRED)) {
+                timelineMqConsumerTimeout.timeout(consumerId, notification.getValue());
+                timeoutAck(consumerId, notification.getValue());
+            } else if (!notification.getCause().equals(RemovalCause.EXPLICIT)) {
+                log.debug("sync ack syncId:{},remove type:{}", notification.getKey(), notification.getCause());
+            }
+        }
     }
 }

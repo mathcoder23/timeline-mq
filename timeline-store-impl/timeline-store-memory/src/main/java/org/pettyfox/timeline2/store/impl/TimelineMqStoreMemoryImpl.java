@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -22,7 +23,7 @@ public class TimelineMqStoreMemoryImpl implements TimelineMqStore {
 
     @Override
     public void store(TimelineMessage timelineMessage) {
-        List<TimelineMessage> list = store.computeIfAbsent(timelineMessage.getTopic(), (key) -> new ArrayList<>());
+        List<TimelineMessage> list = store.computeIfAbsent(timelineMessage.getTopic(), (key) -> new CopyOnWriteArrayList<>());
         list.add(timelineMessage);
     }
 

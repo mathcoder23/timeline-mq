@@ -1,6 +1,7 @@
 package org.pettyfox.timeline2.store;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  *订阅者、被订阅者绑定
@@ -14,6 +15,12 @@ public interface TimelineExchange {
      * @param producerIds 被订阅者id 列表
      */
     void subscribe(String consumerId, String... producerIds);
+    /**
+     * 订阅
+     * @param consumerId 订阅者id
+     * @param producerIds 被订阅者id 列表
+     */
+    void subscribe(String consumerId, Set<String> producerIds);
 
     /**
      * 取消订阅
