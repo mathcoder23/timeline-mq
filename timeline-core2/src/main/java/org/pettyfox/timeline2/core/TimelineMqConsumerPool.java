@@ -51,7 +51,7 @@ public class TimelineMqConsumerPool {
         return (h ^ (h >>> 16)) & HASH_BITS;
     }
 
-    public void wakeupTread(String consumerId) {
+    public void wakeupThread(String consumerId) {
         int hash = spread(consumerId.hashCode());
         pool[hash % pool.length].wakeupThreadByConsumerId(consumerId);
     }

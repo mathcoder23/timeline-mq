@@ -54,7 +54,7 @@ public class RunnerTest implements TimelineMqConsumerTimeout {
         //加入聊天室
         addChatRoom(chatRoom, userLs);
         addChatRoom(chatRoom, userVip);
-
+        addChatRoom(chatRoom, userZs);
         //发送消息
         ThreadUtil.newThread(() -> {
 
@@ -76,7 +76,7 @@ public class RunnerTest implements TimelineMqConsumerTimeout {
                 Thread.sleep(1000);
                 sendMessage(userVip, chatRoom, "抱歉，打扰了~");
 
-                addChatRoom(chatRoom, userZs);
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

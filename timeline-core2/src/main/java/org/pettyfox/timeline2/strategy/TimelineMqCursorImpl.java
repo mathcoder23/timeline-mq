@@ -41,7 +41,7 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
         this.timelineExchange = timelineExchange;
         this.timelineConsumerCursorStore = timelineConsumerCursorStore;
         ScheduledExecutorService timeoutTask = new ScheduledThreadPoolExecutor(1,
-                new ThreadFactoryBuilder().setNameFormat("timeline-timeout-").build(), (r, executor) -> {
+                new ThreadFactoryBuilder().setNameFormat("timeline-timeout-1").build(), (r, executor) -> {
             log.warn("timeline-timeout exception");
         });
         timeoutTask.scheduleAtFixedRate(() -> {
@@ -63,7 +63,7 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
         if (null != consumerList && !consumerList.isEmpty()) {
             consumerList.forEach(consumerId -> {
                 if (!hasPending(consumerId)) {
-                    consumerPool.wakeupTread(consumerId);
+                    consumerPool.wakeupThread(consumerId);
                 }
             });
 
@@ -77,7 +77,7 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
             consumerPendingCounter.decrementAndGet(consumerId);
             timelineConsumerCursorStore.storeConsumerAck(consumerId, timelineHead);
             if (!hasPending(consumerId)) {
-                consumerPool.wakeupTread(consumerId);
+                consumerPool.wakeupThread(consumerId);
             }
         });
     }
@@ -87,7 +87,7 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
             consumerPendingCounter.decrementAndGet(consumerId);
             timelineConsumerCursorStore.storeConsumerAck(consumerId, timelineHead);
             if (!hasPending(consumerId)) {
-                consumerPool.wakeupTread(consumerId);
+                consumerPool.wakeupThread(consumerId);
             }
         });
     }
