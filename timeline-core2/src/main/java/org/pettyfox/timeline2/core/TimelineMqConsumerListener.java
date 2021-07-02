@@ -14,5 +14,5 @@ public interface TimelineMqConsumerListener {
      * 批量消费
      * @param queue 队列
      */
-    void batchConsumer(List<TimelineMessage> queue);
+    void batchConsumer(List<TimelineMessage> queue,String consumerId);
 }

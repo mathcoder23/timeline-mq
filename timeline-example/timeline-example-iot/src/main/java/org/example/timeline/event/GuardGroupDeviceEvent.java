@@ -1,4 +1,4 @@
-package org.example.timeline;
+package org.example.timeline.event;
 
 /**
  * 门禁权限组与设备事件
@@ -9,16 +9,16 @@ package org.example.timeline;
 public interface GuardGroupDeviceEvent {
     /**
      * 添加到组
-     * @param deviceId 设备id
+     * @param deviceSn 设备id
      * @param groupId 组id
      */
-    void onAddGroup(Long deviceId,Long groupId);
+    void onAddGroup(String deviceSn,Long groupId);
 
 
     /**
      * 设备在组中移除
-     * @param deviceId 设备id
+     * @param deviceSn 设备id
      * @param groupId 组id
      */
-    void onDelGroup(Long deviceId,Long groupId);
+    void onDelGroup(String deviceSn,Long groupId);
 }

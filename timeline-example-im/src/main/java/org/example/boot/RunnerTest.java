@@ -91,7 +91,7 @@ public class RunnerTest implements TimelineMqConsumerTimeout {
         imUser.setId(SecureUtil.md5(name));
         imUser.setName(name);
         // 监听用户消息
-        timelineMq.registerConsumer(imUser.getId(), 10, queue -> {
+        timelineMq.registerConsumer(imUser.getId(), 10, (queue, consumerId) -> {
             for (TimelineMessage message : queue) {
                 log.info("[{}]接收消息，{}", name, message.getBody());
                 timelineMq.consumerAck(imUser.getId(), message);

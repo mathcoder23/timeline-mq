@@ -34,7 +34,7 @@ public class TimelineConsumerCursorStoreMemoryImpl implements TimelineConsumerCu
                 temp.put(timelineHead.getTopic(), timelineHead.getId());
             }
         }
-        log.info("cursor:{},{},{}", consumerId, timelineHead.getTopic(), temp.get(timelineHead.getTopic()));
+//        log.info("cursor:{},{},{}", consumerId, timelineHead.getTopic(), temp.get(timelineHead.getTopic()));
 
     }
 
@@ -46,7 +46,7 @@ public class TimelineConsumerCursorStoreMemoryImpl implements TimelineConsumerCu
             if (store.containsKey(consumerId)) {
                 synchronized (consumerId.intern()) {
                     parameter.setCursorFrom(Optional.ofNullable(store.get(consumerId).get(p)).orElse(0L));
-                    log.info("get cursor:{},{}", consumerId,parameter.getCursorFrom());
+//                    log.info("get cursor:{},{}", consumerId,parameter.getCursorFrom());
                 }
             }
             return parameter;

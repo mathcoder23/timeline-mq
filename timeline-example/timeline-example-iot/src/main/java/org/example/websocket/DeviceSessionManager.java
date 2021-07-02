@@ -5,6 +5,8 @@ import org.example.timeline.TimelineDeviceService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,6 +31,12 @@ public class DeviceSessionManager {
             session.remove(sn);
             timelineDeviceService.deviceOffline(deviceDto);
         }
+    }
+
+    public List<DeviceDto> list() {
+        List<DeviceDto> list = new ArrayList<>();
+        session.forEach((k, v) -> list.add(v));
+        return list;
     }
 
     public boolean hasOnline(String sn) {

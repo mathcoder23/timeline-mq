@@ -1,4 +1,4 @@
-package org.example.timeline;
+package org.example.timeline.event;
 
 /**
  * 门禁数据事件

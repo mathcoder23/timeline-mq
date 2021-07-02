@@ -122,7 +122,7 @@ public class TimelineMqConsumerPool {
                 List<TimelineMessage> queue = timelineCursorMq.pull(consumer.getConsumerId(), consumer.getBatchSize());
                 if (null != queue && !queue.isEmpty()) {
                     if (null != consumer.getListener()) {
-                        consumer.getListener().batchConsumer(queue);
+                        consumer.getListener().batchConsumer(queue, consumer.getConsumerId());
                     } else {
                         log.warn("not config consumer listener.");
                     }
