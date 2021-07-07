@@ -167,4 +167,9 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
             }
         }
     }
+
+    @Override
+    public void wakeupConsumer(String consumerId) {
+        consumerPool.wakeupThread(consumerId);
+    }
 }

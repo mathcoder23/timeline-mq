@@ -52,4 +52,9 @@ public class TimelineConsumerCursorStoreMemoryImpl implements TimelineConsumerCu
             return parameter;
         }).collect(Collectors.toList());
     }
+
+    @Override
+    public void removeConsumer(String consumerId) {
+        store.remove(consumerId);
+    }
 }

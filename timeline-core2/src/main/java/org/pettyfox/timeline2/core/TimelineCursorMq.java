@@ -49,4 +49,10 @@ public interface TimelineCursorMq {
     void unregisterConsumer(String consumerId);
 
     void setTimeoutListener(TimelineMqConsumerTimeout timeoutListener);
+
+    /**
+     * 唤醒消费者
+     * @param consumerId
+     */
+    void wakeupConsumer(String consumerId);
 }

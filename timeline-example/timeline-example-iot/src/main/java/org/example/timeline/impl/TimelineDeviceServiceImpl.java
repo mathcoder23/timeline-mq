@@ -68,9 +68,9 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
     public void batchConsumer(List<TimelineMessage> queue, String consumerId) {
         for (TimelineMessage message : queue) {
             log.info("consumer:{},queue:{}", consumerId, message.getBody());
+            timelineMq.consumerAck(consumerId, message);
         }
         log.info("batch consumer:{}, queue size:{}", consumerId, queue.size());
-        timelineMq.consumerAck(consumerId, queue.get(queue.size() - 1));
     }
 
     //门禁数据消息管理
@@ -126,11 +126,12 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
     @Override
     public void onAddGroup(String deviceSn, Long groupId) {
         exchange.subscribe(deviceSn, String.valueOf(groupId));
+        timelineMq.wakeupConsumer(deviceSn);
     }
 
     @Override
     public void onDelGroup(String deviceSn, Long groupId) {
         exchange.unsubscribe(deviceSn, String.valueOf(groupId));
-
+        timelineConsumerCursorStore.removeConsumer(deviceSn);
     }
 }

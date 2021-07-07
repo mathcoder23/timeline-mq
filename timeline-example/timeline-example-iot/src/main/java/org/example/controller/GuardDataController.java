@@ -1,11 +1,12 @@
 package org.example.controller;
 
 import org.example.dto.GuardData;
-import org.example.timeline.event.GuardDataEvent;
 import org.example.timeline.StoreService;
+import org.example.timeline.event.GuardDataEvent;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  * 门禁数据管理
@@ -57,4 +58,12 @@ public class GuardDataController {
 
         return "ok";
     }
+
+
+    @GetMapping("list")
+    public Map<Long, GuardData> list() {
+        return storeService.getGuardDataMap();
+    }
+
+
 }
