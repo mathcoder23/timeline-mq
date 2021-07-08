@@ -1,7 +1,7 @@
 package org.pettyfox.timeline2.store.impl;
 
 
-import org.pettyfox.timeline2.store.TimelineExchange;
+import org.pettyfox.timeline2.store.TimelineExchangeStore;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Petty Fox
  * @version 1.0
  */
-public class TimelineExchangeMemoryImpl implements TimelineExchange {
+public class TimelineExchangeMemoryImpl implements TimelineExchangeStore {
     private final ConcurrentHashMap<String, Set<String>> producerCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Set<String>> consumerCache = new ConcurrentHashMap<>();
 

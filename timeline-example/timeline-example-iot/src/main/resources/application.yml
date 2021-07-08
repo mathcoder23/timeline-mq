@@ -1,0 +1,49 @@
+server:
+  port: 8800
+  tomcat:
+    accept-count: 10000
+    max-connections: 10000
+    threads:
+      max: 800
+      min-spare: 10
+spring:
+  freemarker:
+    cache: false
+    charset: UTF-8
+    check-template-location: true
+    content-type: text/html
+    expose-request-attributes: true
+    expose-session-attributes: true
+    request-context-attribute: request
+    suffix: .ftl
+    tempalte-loader-path: classpath:/templates
+  mvc:
+    static-path-pattern: /static/**
+  redis:
+    # 地址
+    host: 127.0.0.1
+    # 端口号
+    port: 6379
+    # 密码
+    password:
+    # 超时时间，单位毫秒
+    timeout: 3000
+    # 数据库编号
+    database: 0
+    # 配置lettuce
+    lettuce:
+      pool:
+        # 连接池中的最小空闲连接
+        min-idle: 1
+        # 连接池中的最大空闲连接
+        max-idle: 6
+        # 连接池最大连接数（使用负值表示没有限制,不要配置过大，否则可能会影响redis的性能）
+        max-active: 10
+        # 连接池最大阻塞等待时间（使用负值表示没有限制）；单位毫秒
+        max-wait: 1000
+      #关闭超时时间；单位毫秒
+      shutdown-timeout: 200
+logging:
+  level:
+    org.example.*: info
+    org.pettyfox.*: info

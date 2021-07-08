@@ -40,7 +40,7 @@ public class TimelineMqStoreMemoryImpl implements TimelineMqStore {
                 continue;
             }
             List<TimelineMessage> tempList = store.get(p.getTopic())
-                    .stream().filter(t -> t.getId() > p.getCursorFrom() && t.getId() <= p.getCursorTo())
+                    .stream().filter(t -> Long.parseLong(t.getId()) > p.getCursorFrom() && Long.parseLong(t.getId()) <= p.getCursorTo())
                     .limit(p.getBatchSize())
                     .collect(Collectors.toList());
             if (tempList.size() > 0) {

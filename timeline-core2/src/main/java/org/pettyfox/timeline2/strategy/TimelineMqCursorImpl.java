@@ -10,7 +10,7 @@ import org.pettyfox.timeline2.model.TimelineHead;
 import org.pettyfox.timeline2.model.TimelineMessage;
 import org.pettyfox.timeline2.model.TimelinePullParameter;
 import org.pettyfox.timeline2.store.TimelineConsumerCursorStore;
-import org.pettyfox.timeline2.store.TimelineExchange;
+import org.pettyfox.timeline2.store.TimelineExchangeStore;
 import org.pettyfox.timeline2.store.TimelineMqStore;
 
 import java.util.List;
@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Timeline 服务，提供对外接口
@@ -29,14 +30,14 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TimelineMqCursorImpl implements TimelineCursorMq {
     private final TimelineMqStore timelineStore;
-    private final TimelineExchange timelineExchange;
+    private final TimelineExchangeStore timelineExchange;
     private final TimelineConsumerCursorStore timelineConsumerCursorStore;
     private final TimelineMqConsumerPool consumerPool = new TimelineMqConsumerPool(this);
     private final ConcurrentHashMap<String, Cache<String, TimelineHead>> consumerPendingCache = new ConcurrentHashMap<>();
     private final AtomicLongMap<String> consumerPendingCounter = AtomicLongMap.create();
     private TimelineMqConsumerTimeout timelineMqConsumerTimeout;
 
-    public TimelineMqCursorImpl(TimelineMqStore timelineStore, TimelineExchange timelineExchange, TimelineConsumerCursorStore timelineConsumerCursorStore) {
+    public TimelineMqCursorImpl(TimelineMqStore timelineStore, TimelineExchangeStore timelineExchange, TimelineConsumerCursorStore timelineConsumerCursorStore) {
         this.timelineStore = timelineStore;
         this.timelineExchange = timelineExchange;
         this.timelineConsumerCursorStore = timelineConsumerCursorStore;
@@ -101,8 +102,13 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
         if (null == producerIds || producerIds.isEmpty()) {
             return null;
         }
-        List<TimelinePullParameter> parameter = timelineConsumerCursorStore.listConsumerCursor(consumerId, producerIds);
-        parameter.forEach(t -> t.setBatchSize(batchSize));
+        List<TimelinePullParameter> parameter = producerIds.stream().map(pid -> {
+            TimelinePullParameter pullParameter = new TimelinePullParameter();
+            pullParameter.setTopic(pid);
+            pullParameter.setBatchSize(batchSize);
+            pullParameter.setConsumerId(consumerId);
+            return pullParameter;
+        }).collect(Collectors.toList());
         List<TimelineMessage> list = timelineStore.listTimeline(parameter);
         addPending(consumerId, list);
         return list;
@@ -115,11 +121,14 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
         consumerSession.setBatchSize(batchSize);
         consumerSession.setListener(listener);
         consumerPool.addConsumer(consumerSession);
+        timelineExchange.onConsumerOnline(consumerId);
     }
 
     @Override
     public void unregisterConsumer(String consumerId) {
         consumerPool.removeConsumer(consumerId);
+        timelineExchange.onConsumerOffline(consumerId);
+
     }
 
     @Override

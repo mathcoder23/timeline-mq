@@ -2,6 +2,8 @@ package org.example.timeline.impl;
 
 import cn.hutool.core.lang.Snowflake;
 import com.alibaba.fastjson.JSON;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.example.dto.DeviceDto;
 import org.example.dto.GuardData;
@@ -16,10 +18,8 @@ import org.pettyfox.timeline2.core.TimelineMqFactory;
 import org.pettyfox.timeline2.model.TimelineHead;
 import org.pettyfox.timeline2.model.TimelineMessage;
 import org.pettyfox.timeline2.store.TimelineConsumerCursorStore;
-import org.pettyfox.timeline2.store.TimelineExchange;
-import org.pettyfox.timeline2.store.impl.TimelineConsumerCursorStoreMemoryImpl;
-import org.pettyfox.timeline2.store.impl.TimelineExchangeMemoryImpl;
-import org.pettyfox.timeline2.store.impl.TimelineMqStoreMemoryImpl;
+import org.pettyfox.timeline2.store.TimelineExchangeStore;
+import org.pettyfox.timeline2.store.TimelineMqStore;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -35,15 +35,24 @@ import java.util.List;
 @Slf4j
 public class TimelineDeviceServiceImpl implements TimelineDeviceService, TimelineMqConsumerListener, GuardDataEvent, GuardGroupDeviceEvent, TimelineMqConsumerTimeout {
     private final Snowflake snowflake = new Snowflake(1, 1);
-    private TimelineExchange exchange = new TimelineExchangeMemoryImpl();
-    private TimelineConsumerCursorStore timelineConsumerCursorStore = new TimelineConsumerCursorStoreMemoryImpl();
-    private TimelineCursorMq timelineMq = TimelineMqFactory.createCursorMq(new TimelineMqStoreMemoryImpl(), exchange, timelineConsumerCursorStore);
+    @Resource
+    private TimelineExchangeStore exchange;
+    @Resource
+    private TimelineConsumerCursorStore timelineConsumerCursorStore;
+
+    @Resource
+    private TimelineMqStore timelineMqStore;
+
+    private TimelineCursorMq timelineMq;
 
     @Resource
     private StoreService storeService;
+    @Resource
+    private MetricRegistry metricRegistry;
 
     @PostConstruct
     public void init() {
+        timelineMq = TimelineMqFactory.createCursorMq(timelineMqStore, exchange, timelineConsumerCursorStore);
         timelineMq.setTimeoutListener(this);
     }
 
@@ -51,6 +60,7 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
     public void deviceOnline(DeviceDto deviceDto) {
         log.info("device online:{}", deviceDto.getSn());
         timelineMq.registerConsumer(deviceDto.getSn(), 10, this);
+
     }
 
     @Override
@@ -70,6 +80,8 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
             log.info("consumer:{},queue:{}", consumerId, message.getBody());
             timelineMq.consumerAck(consumerId, message);
         }
+        Meter meter =  metricRegistry.meter("consumer");
+        meter.mark();
         log.info("batch consumer:{}, queue size:{}", consumerId, queue.size());
     }
 
@@ -79,8 +91,8 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
         TimelineMessage timelineMessage = new TimelineMessage();
         timelineMessage.setTopic(String.valueOf(groupId));
         timelineMessage.setBody(JSON.toJSONString(storeService.getGuardDataMap().get(guardDataId)));
-        timelineMessage.setId(snowflake.nextId());
         timelineMessage.setObjId(String.valueOf(guardDataId));
+        timelineMessage.setOptimizeFlag(false);
         timelineMq.push(timelineMessage);
     }
 
@@ -89,7 +101,7 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
         TimelineMessage timelineMessage = new TimelineMessage();
         timelineMessage.setTopic(String.valueOf(groupId));
         timelineMessage.setBody("remove");
-        timelineMessage.setId(snowflake.nextId());
+        timelineMessage.setOptimizeFlag(false);
         timelineMessage.setObjId(String.valueOf(guardDataId));
         timelineMq.push(timelineMessage);
     }
@@ -103,7 +115,7 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
         TimelineMessage timelineMessage = new TimelineMessage();
         timelineMessage.setTopic(String.valueOf(guardData.getGuardGroupId()));
         timelineMessage.setBody("remove");
-        timelineMessage.setId(snowflake.nextId());
+        timelineMessage.setOptimizeFlag(false);
         timelineMessage.setObjId(String.valueOf(guardDataId));
         timelineMq.push(timelineMessage);
     }
@@ -117,7 +129,7 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
         TimelineMessage timelineMessage = new TimelineMessage();
         timelineMessage.setTopic(String.valueOf(guardData.getGuardGroupId()));
         timelineMessage.setBody(JSON.toJSONString(storeService.getGuardDataMap().get(guardDataId)));
-        timelineMessage.setId(snowflake.nextId());
+        timelineMessage.setOptimizeFlag(false);
         timelineMessage.setObjId(String.valueOf(guardDataId));
         timelineMq.push(timelineMessage);
     }

@@ -13,17 +13,12 @@
     <packaging>pom</packaging>
     <modules>
         <module>timeline-example-iot</module>
+<!--        <module>timeline-example-im</module>-->
     </modules>
     <dependencies>
         <dependency>
             <groupId>org.pettyfox.timeline</groupId>
             <artifactId>timeline-core2</artifactId>
-            <version>1.0.0-Alpha</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.pettyfox.timeline</groupId>
-            <artifactId>timeline-store-memory</artifactId>
             <version>1.0.0-Alpha</version>
             <scope>compile</scope>
         </dependency>

@@ -15,7 +15,7 @@ public class TimelineHead implements Serializable {
     /**
      * 严格递增id
      */
-    private Long id;
+    private String id;
 
     /**
      * topic主题

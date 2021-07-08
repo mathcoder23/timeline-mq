@@ -26,13 +26,13 @@ public class TimelineConsumerCursorStoreMemoryImpl implements TimelineConsumerCu
     public void storeConsumerAck(String consumerId, TimelineHead timelineHead) {
         ConcurrentHashMap<String, Long> temp = store.computeIfAbsent(consumerId, k -> new ConcurrentHashMap<>(10));
         synchronized (consumerId.intern()) {
-            if (temp.containsKey(timelineHead.getTopic())) {
-                if (temp.get(timelineHead.getTopic()) < timelineHead.getId()) {
-                    temp.put(timelineHead.getTopic(), timelineHead.getId());
-                }
-            } else {
-                temp.put(timelineHead.getTopic(), timelineHead.getId());
-            }
+//            if (temp.containsKey(timelineHead.getTopic())) {
+//                if (temp.get(timelineHead.getTopic()) < timelineHead.getId()) {
+//                    temp.put(timelineHead.getTopic(), timelineHead.getId());
+//                }
+//            } else {
+//                temp.put(timelineHead.getTopic(), timelineHead.getId());
+//            }
         }
 //        log.info("cursor:{},{},{}", consumerId, timelineHead.getTopic(), temp.get(timelineHead.getTopic()));
 

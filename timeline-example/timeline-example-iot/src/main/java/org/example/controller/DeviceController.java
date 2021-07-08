@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import com.codahale.metrics.MetricRegistry;
 import org.example.dto.DeviceDto;
 import org.example.timeline.event.GuardGroupDeviceEvent;
 import org.example.websocket.DeviceSessionManager;
@@ -26,6 +27,9 @@ public class DeviceController {
     @Resource
     private DeviceSessionManager deviceSessionManager;
 
+    @Resource
+    private MetricRegistry metricRegistry;
+
     @GetMapping("deviceAddGroup")
     public String deviceAddGroup(@RequestParam String deviceSn, @RequestParam Long guardGroupId) {
         guardGroupDeviceEvent.onAddGroup(deviceSn, guardGroupId);
@@ -41,5 +45,11 @@ public class DeviceController {
     @GetMapping("deviceList")
     public List<DeviceDto> deviceDelGroup() {
         return deviceSessionManager.list();
+    }
+
+
+    @GetMapping("metric")
+    public Object metric() {
+        return metricRegistry.getMeters();
     }
 }

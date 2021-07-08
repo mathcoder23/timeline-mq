@@ -13,9 +13,10 @@
         <module>timeline-core2</module>
         <module>timeline-store</module>
         <module>timline-model</module>
-        <module>timeline-store-impl/timeline-store-memory</module>
+<!--        <module>timeline-store-impl/timeline-store-memory</module>-->
+<!--        <module>timeline-store-impl/timeline-store-sqlite</module>-->
         <module>timeline-example</module>
-        <module>timeline-example-im</module>
+        <module>timeline-store-impl/timeline-store-redis</module>
     </modules>
     <build>
         <plugins>

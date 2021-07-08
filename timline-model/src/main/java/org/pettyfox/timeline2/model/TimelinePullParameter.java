@@ -24,6 +24,8 @@ public class TimelinePullParameter {
      */
     private String topic;
 
+    private String consumerId;
+
     /**
      * 拉取消息的一批大小
      */
