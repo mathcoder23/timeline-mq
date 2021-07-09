@@ -1,6 +1,5 @@
 package org.example.timeline.impl;
 
-import cn.hutool.core.lang.Snowflake;
 import com.alibaba.fastjson.JSON;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
@@ -40,7 +39,6 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService,
         GuardGroupDeviceEvent,
         GuardGroupEvent,
         TimelineMqConsumerTimeout {
-    private final Snowflake snowflake = new Snowflake(1, 1);
     @Resource
     private TimelineExchangeStore exchange;
     @Resource

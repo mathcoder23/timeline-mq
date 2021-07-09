@@ -5,11 +5,19 @@
     <parent>
         <artifactId>timeline-mq</artifactId>
         <groupId>org.pettyfox.timeline</groupId>
-        <version>1.0.0-Alpha</version>
+        <version>2.0.0-Alpha</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>timeline-store</artifactId>
+    <dependencies>
 
+        <dependency>
+            <groupId>org.pettyfox.timeline</groupId>
+            <artifactId>timline-model</artifactId>
+            <version>2.0.0-Alpha</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
 </project>

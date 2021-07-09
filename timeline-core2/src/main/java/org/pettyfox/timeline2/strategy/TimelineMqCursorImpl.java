@@ -151,7 +151,7 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
 
     private void addPending(String consumerId, List<TimelineMessage> list) {
         Cache<String, TimelineHead> cache = consumerPendingCache.computeIfAbsent(consumerId, key -> CacheBuilder.newBuilder()
-                .expireAfterWrite(10, TimeUnit.SECONDS)
+                .expireAfterWrite(30, TimeUnit.SECONDS)
                 .initialCapacity(100)
                 .maximumSize(10000)
                 //重要，这个值必须为1，否则影响扩容的准确性，导致以size的类型被驱逐

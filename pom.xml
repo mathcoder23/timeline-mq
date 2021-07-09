@@ -7,7 +7,10 @@
     <groupId>org.pettyfox.timeline</groupId>
     <artifactId>timeline-mq</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0-Alpha</version>
+    <version>2.0.0-Alpha</version>
+    <properties>
+        <timeline.version>2.0.0-Alpha</timeline.version>
+    </properties>
     <modules>
         <module>timline-core</module>
         <module>timeline-core2</module>
@@ -31,12 +34,6 @@
         </plugins>
     </build>
     <dependencies>
-        <dependency>
-            <groupId>org.pettyfox.timeline</groupId>
-            <artifactId>timline-model</artifactId>
-            <version>1.0.0-Alpha</version>
-            <scope>compile</scope>
-        </dependency>
 
 
         <dependency>

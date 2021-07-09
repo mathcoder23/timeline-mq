@@ -87,11 +87,17 @@ public class TimelineMqStoreRedisImpl implements TimelineMqStore {
         if (pendingMessages.isEmpty()) {
             return null;
         }
+        String streamKey = RedisKeyFactory.timelineStreamKey(p.getTopic());
         return pendingMessages.stream()
-                .map(pendingMessage ->
-                        redisTemplate.opsForStream()
-                                .range(RedisKeyFactory.timelineStreamKey(p.getTopic()), Range.closed(pendingMessage.getIdAsString(), pendingMessage.getIdAsString()), RedisZSetCommands.Limit.limit().count(1)))
-                .filter(Objects::nonNull)
+                .map(pendingMessage -> {
+                    List<MapRecord<String, Object, Object>> list = redisTemplate.opsForStream()
+                            .range(streamKey, Range.closed(pendingMessage.getIdAsString(), pendingMessage.getIdAsString()), RedisZSetCommands.Limit.limit().count(1));
+                    if (null == list || list.isEmpty()) {
+                        //清理查询不到的pending记录
+                        redisTemplate.opsForStream().acknowledge(streamKey, consumer.getGroup(), pendingMessage.getIdAsString());
+                    }
+                    return list;
+                }).filter(Objects::nonNull)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
