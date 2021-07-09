@@ -3,6 +3,7 @@ package org.example.controller;
 import org.example.dto.GuardData;
 import org.example.timeline.StoreService;
 import org.example.timeline.event.GuardDataEvent;
+import org.example.timeline.event.GuardGroupEvent;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -20,6 +21,8 @@ import java.util.Map;
 public class GuardDataController {
     @Resource
     private StoreService storeService;
+    @Resource
+    private GuardGroupEvent guardGroupEvent;
     @Resource
     private GuardDataEvent guardDataEvent;
 
@@ -66,4 +69,10 @@ public class GuardDataController {
     }
 
 
+    @GetMapping("delGroup")
+    public String delGroup(@RequestParam String groupId) {
+        guardGroupEvent.onDelGroup(groupId);
+
+        return "ok";
+    }
 }

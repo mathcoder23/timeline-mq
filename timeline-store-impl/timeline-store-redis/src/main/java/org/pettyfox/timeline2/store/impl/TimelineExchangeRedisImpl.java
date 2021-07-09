@@ -1,7 +1,9 @@
 package org.pettyfox.timeline2.store.impl;
 
 
+import org.pettyfox.timeline2.store.RedisStreamUniqueService;
 import org.pettyfox.timeline2.store.TimelineExchangeStore;
+import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.StreamInfo;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -22,6 +24,8 @@ public class TimelineExchangeRedisImpl implements TimelineExchangeStore {
     private static final String T_EXCHANGE_PRODUCER = "T_EXCHANGE_PRODUCER_";
     @Resource
     private RedisTemplate<String, String> redisTemplate;
+    @Resource
+    private RedisStreamUniqueService redisStreamUniqueService;
 
     private String getConsumerKey(String consumerId) {
         return T_EXCHANGE_CONSUMER + consumerId;
@@ -80,6 +84,7 @@ public class TimelineExchangeRedisImpl implements TimelineExchangeStore {
         }
         redisTemplate.delete(getProducerKey(producerId));
         //TODO 解绑消费组
+        redisStreamUniqueService.deleteProducer(producerId);
     }
 
     @Override
@@ -117,7 +122,8 @@ public class TimelineExchangeRedisImpl implements TimelineExchangeStore {
             if (b) {
                 StreamInfo.XInfoGroups groups = redisTemplate.opsForStream().groups(streamKey);
                 if (groups.stream().noneMatch(group -> group.groupName().equals(consumerId))) {
-                    redisTemplate.opsForStream().createGroup(streamKey, consumerId);
+                    ReadOffset readOffset = ReadOffset.from("0-0");
+                    redisTemplate.opsForStream().createGroup(streamKey, readOffset, consumerId);
                 }
             } else {
                 redisTemplate.opsForStream().createGroup(streamKey, consumerId);

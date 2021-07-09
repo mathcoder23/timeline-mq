@@ -8,5 +8,5 @@ import org.pettyfox.timeline2.model.TimelineHead;
  * @date 2021/6/21 14:15
  */
 public interface TimelineMqConsumerTimeout {
-    void timeout(String consumerId, TimelineHead timelineHead);
+    boolean timeout(String consumerId, TimelineHead timelineHead);
 }

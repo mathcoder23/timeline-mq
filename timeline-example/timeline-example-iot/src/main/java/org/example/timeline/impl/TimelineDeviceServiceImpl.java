@@ -11,6 +11,7 @@ import org.example.timeline.StoreService;
 import org.example.timeline.TimelineDeviceService;
 import org.example.timeline.event.GuardDataEvent;
 import org.example.timeline.event.GuardGroupDeviceEvent;
+import org.example.timeline.event.GuardGroupEvent;
 import org.pettyfox.timeline2.core.TimelineCursorMq;
 import org.pettyfox.timeline2.core.TimelineMqConsumerListener;
 import org.pettyfox.timeline2.core.TimelineMqConsumerTimeout;
@@ -33,7 +34,12 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class TimelineDeviceServiceImpl implements TimelineDeviceService, TimelineMqConsumerListener, GuardDataEvent, GuardGroupDeviceEvent, TimelineMqConsumerTimeout {
+public class TimelineDeviceServiceImpl implements TimelineDeviceService,
+        TimelineMqConsumerListener,
+        GuardDataEvent,
+        GuardGroupDeviceEvent,
+        GuardGroupEvent,
+        TimelineMqConsumerTimeout {
     private final Snowflake snowflake = new Snowflake(1, 1);
     @Resource
     private TimelineExchangeStore exchange;
@@ -59,7 +65,7 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
     @Override
     public void deviceOnline(DeviceDto deviceDto) {
         log.info("device online:{}", deviceDto.getSn());
-        timelineMq.registerConsumer(deviceDto.getSn(), 10, this);
+        timelineMq.registerConsumer(deviceDto.getSn(), 100, this);
 
     }
 
@@ -70,19 +76,23 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
     }
 
     @Override
-    public void timeout(String consumerId, TimelineHead timelineHead) {
+    public boolean timeout(String consumerId, TimelineHead timelineHead) {
         log.info("timeout {},{}", consumerId, timelineHead.getId());
+        return false;
     }
 
     @Override
     public void batchConsumer(List<TimelineMessage> queue, String consumerId) {
+
+        Meter meter = metricRegistry.meter("consumer_" + consumerId);
         for (TimelineMessage message : queue) {
             log.info("consumer:{},queue:{}", consumerId, message.getBody());
             timelineMq.consumerAck(consumerId, message);
+            meter.mark();
         }
-        Meter meter =  metricRegistry.meter("consumer");
-        meter.mark();
-        log.info("batch consumer:{}, queue size:{}", consumerId, queue.size());
+
+
+//        log.info("batch consumer:{}, queue size:{}", consumerId, queue.size());
     }
 
     //门禁数据消息管理
@@ -132,6 +142,11 @@ public class TimelineDeviceServiceImpl implements TimelineDeviceService, Timelin
         timelineMessage.setOptimizeFlag(false);
         timelineMessage.setObjId(String.valueOf(guardDataId));
         timelineMq.push(timelineMessage);
+    }
+
+    @Override
+    public void onDelGroup(String groupId) {
+        exchange.removeAllSubscribeByBeSubscribe(groupId);
     }
 
     //设备、门禁组管理

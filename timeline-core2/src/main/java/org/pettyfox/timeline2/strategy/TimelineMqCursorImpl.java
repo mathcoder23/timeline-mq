@@ -93,6 +93,15 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
         });
     }
 
+    private void timeoutCache(String consumerId, TimelineHead timelineHead) {
+        Optional.ofNullable(consumerPendingCache.get(consumerId)).ifPresent(cache -> {
+            consumerPendingCounter.decrementAndGet(consumerId);
+            if (!hasPending(consumerId)) {
+                consumerPool.wakeupThread(consumerId);
+            }
+        });
+    }
+
     @Override
     public List<TimelineMessage> pull(String consumerId, int batchSize) {
         if (hasPending(consumerId)) {
@@ -144,7 +153,7 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
         Cache<String, TimelineHead> cache = consumerPendingCache.computeIfAbsent(consumerId, key -> CacheBuilder.newBuilder()
                 .expireAfterWrite(10, TimeUnit.SECONDS)
                 .initialCapacity(100)
-                .maximumSize(1000)
+                .maximumSize(10000)
                 //重要，这个值必须为1，否则影响扩容的准确性，导致以size的类型被驱逐
                 .concurrencyLevel(1)
                 /**
@@ -169,8 +178,12 @@ public class TimelineMqCursorImpl implements TimelineCursorMq {
         public void onRemoval(RemovalNotification<String, TimelineHead> notification) {
             //超时同步队列
             if (notification.getCause().equals(RemovalCause.EXPIRED)) {
-                timelineMqConsumerTimeout.timeout(consumerId, notification.getValue());
-                timeoutAck(consumerId, notification.getValue());
+                boolean ack = timelineMqConsumerTimeout.timeout(consumerId, notification.getValue());
+                if (ack) {
+                    timeoutAck(consumerId, notification.getValue());
+                } else {
+                    timeoutCache(consumerId, notification.getValue());
+                }
             } else if (!notification.getCause().equals(RemovalCause.EXPLICIT)) {
                 log.debug("sync ack syncId:{},remove type:{}", notification.getKey(), notification.getCause());
             }
