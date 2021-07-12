@@ -2,24 +2,25 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>timeline-mq</artifactId>
-        <groupId>org.pettyfox.timeline</groupId>
-        <version>2.0.0-Alpha</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
 
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.pettyfox.timeline</groupId>
     <artifactId>timeline-example</artifactId>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
+
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
     <modules>
         <module>timeline-example-iot</module>
-<!--        <module>timeline-example-im</module>-->
+        <!--        <module>timeline-example-im</module>-->
     </modules>
     <dependencies>
         <dependency>
-            <groupId>org.pettyfox.timeline</groupId>
-            <artifactId>timeline-core2</artifactId>
-            <version>2.0.0-Alpha</version>
+            <groupId>com.pettyfox.timeline</groupId>
+            <artifactId>timeline-core</artifactId>
+            <version>0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -48,6 +49,5 @@
             <version>1.18.12</version>
         </dependency>
     </dependencies>
-
 
 </project>

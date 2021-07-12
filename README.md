@@ -1,10 +1,13 @@
-# 状态
-> 不稳定、开发分支`dev-v2`
-
 # timeline-mq
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?label=license)](https://github.com/mathcoder23/timeline-mq/LICENSE)
+[![Maven Central](https://img.shields.io/maven-central/v/com.nepxion/discovery.svg?label=maven)](https://search.maven.org/artifact/com.pettyfox/timeline)
+
 基于Java实现的。Timeline模式朋友圈、微博、消息推送、feed流、im通讯的抽象库，提供数据流间的分发功能、分发失败后重试，将抽象层、存储层分离提高系统灵活性、以及各种存储层的具体实现。
 
 它的本质是一款消息队列，但是消息队列又过于抽象，因此我们将具体的某些业务进行抽离、加工、设计，转换为一类以消息队列为核心的业务实现方法。
+# 状态
+> 不稳定、开发分支`dev-v2`
+
 # 版本记录
 ## V1.0.0
 ## 实现基本的timeline抽象core层设计。
