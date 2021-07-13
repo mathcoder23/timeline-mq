@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.example</groupId>
-    <artifactId>timepline-example-iot</artifactId>
+    <artifactId>timeline-example-iot</artifactId>
     <properties>
         <java.version>1.8</java.version>
         <maven.deploy.skip>true</maven.deploy.skip>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>com.pettyfox.timeline</groupId>
             <artifactId>timeline-core</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>1.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -75,7 +75,7 @@
         <dependency>
             <groupId>com.pettyfox.timeline</groupId>
             <artifactId>timeline-store-redis</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>1.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

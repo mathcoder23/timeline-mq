@@ -5,9 +5,10 @@
     <parent>
         <artifactId>timeline-mq</artifactId>
         <groupId>com.pettyfox.timeline</groupId>
-        <version>0.1-SNAPSHOT</version>
+        <version>1.0.4-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
-    <version>0.1-SNAPSHOT</version>
+    <version>1.0.4-SNAPSHOT</version>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>timeline-store-redis</artifactId>
     <dependencies>

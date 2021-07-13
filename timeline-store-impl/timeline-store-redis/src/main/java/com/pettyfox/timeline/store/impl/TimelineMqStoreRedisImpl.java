@@ -20,7 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
- * 基于内存的消息存储
+ * 基于Redis的消息存储
  *
  * @author Petty Fox
  * @version 1.0
