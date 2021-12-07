@@ -1,42 +1,22 @@
-# timeline-mq
-[![GitHub license](https://img.shields.io/github/license/mathcoder23/timeline-mq)](https://github.com/mathcoder23/timeline-mq/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/mathcoder23/timeline-mq)](https://github.com/mathcoder23/timeline-mq/stargazers)
-[![Maven Central](https://img.shields.io/maven-central/v/com.pettyfox.timeline/timeline-mq-starter-redis.svg?label=Maven%20Central)](https://search.maven.org/artifact/com.pettyfox.timeline/timeline-mq-starter-redis)
+# 时序消息队列(TimelineMQ)历程
+> 通过上述的业务场景，本质上是实现异构数据的多端同步问题，类似于朋友圈、微博、消息推送、feed流、im通讯、hook回调等等，这样的业务场景我们都能抽象为这样的业务结构，
+>在最初我想通过jar集成的方式，来开发一个工具类包，但是经过实践发现，集成难度大，必须要非常了解此队列的业务设计，才能更加完美的集成，为了实现高内聚低耦合的开发思路
+>我决定将此功能设计为中间件的方式集成。
 
-基于Java实现的。Timeline模式朋友圈、微博、消息推送、feed流、im通讯的抽象库，提供数据流间的分发功能、分发失败后重试，将抽象层、存储层分离提高系统灵活性、以及各种存储层的具体实现。
+# 项目目标
+- 作为一个工作近5年的老程序员了，经常有自己的想法，也有很多开源项目的规划，但就目前而言都没有一个成熟、可用的开源产品，更别说星星数了。
+- 分析了在项目上确实会遇到很多类似的业务场景，并且之前也对此项目进行过一个算比较规范的发布，因此这次就对此项目进行深度改造
 
-它的本质是一款消息队列，但是消息队列又过于抽象，因此我们将具体的某些业务进行抽离、加工、设计，转换为一类以消息队列为核心的业务实现方法。
-# 状态
-> 项目开发中，处于不稳定状态
+# TimelineMQ 概述(2021-12-7)
+## 项目的发源
+> 此项目灵感是我在开发“人员-设备”间的数据同步业务产生的，首先存在参与的端点有“服务器”“设备”，服务器负责管理人员数据，同时也管理设备数据，
+>需要将人员信息同步到每台上线的设备中。一个比较关键的数据就是，一个人员是否被同步到设备中去了。所以一般会用一个同步记录表来，因此假设有n条人员数据
+>，m条设备，那么此表的数据量将是n*m条数据，当数据上了一定量后，处理会略显缓慢与复杂，因此借用Redis Stream的设计思路，采用消费指针的方式来表达同步信号，但由于
+>是游标的方式，为了提升性能，需要改动业务体系。此业务体系就是TimelineMQ需要完成的事
 
-# 功能特点
-- 轻量级MQ，小到仅需要去下jar包便可以使用。或轻量级服务间消息队列通讯(无中间件、点对点通讯)。
-- 专有化的消息队列。旨在解决某类特有消息队列模型下的业务流处理方法。
+# 开发规划
+- 迁移core库
+- 后台管理(后台与API接口分离)
+- 定义开发API
 
-# 数据同步
-## 场景描述1
-在仓库A中用户1的信息实时的同步到仓库B、C...中。当用户1的信息在A仓中被修改、删除时也会实时同步。
-数据流程如下：
-1. 仓A新建用户1，数据同步至仓B，数据同步至仓C...
 
-2. 仓A修改用户1，数据同步至仓B，数据同步至仓C...
-
-3. 仓A删除用户1，数据同步至仓B，数据同步至仓C...
-
-4. 仓A创建用户2，数据同步至仓B，数据同步至仓C...
-
-上述数据流微观描述：仓A作为数据生成者。仓B、仓C...作为数据消费者。
-- 数据单向流动
-- 数据存在顺序性
-- 生产者和消费者的数据被消息代理持久化，解耦生产或消费时的高可用处理逻辑。
-- 生产者和消费者关系解耦，实时的增删生产者与消费者关系
-
-# 使用指南
-## Maven集成
-```xml
-<dependency>
-    <groupId>com.pettyfox.timeline</groupId>
-    <artifactId>timeline-mq-starter-redis</artifactId>
-    <version>1.0.3</version>
-</dependency>
-```
